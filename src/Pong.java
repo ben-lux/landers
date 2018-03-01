@@ -5,7 +5,7 @@ import java.awt.event.*;
 public class Pong extends JFrame implements ActionListener {
     final int CIRCLE_SIZE=40, BOARD_SIZE=1000, RECT_WIDTH=20, RECT_HEIGHT=100;
     JButton b;
-    int cmpScore=0, playerScore=0;
+
     public Pong(){
         setTitle("Pong");
         setSize(BOARD_SIZE,BOARD_SIZE);
@@ -21,7 +21,7 @@ public class Pong extends JFrame implements ActionListener {
 
     }
 
-    final int playerPaddleX=BOARD_SIZE-50;
+    final int PLAYER_PADDLE_X=BOARD_SIZE-50;
     int playerPaddleY = BOARD_SIZE/2;
     int wheelRotation=0;
     public void playerPaddle(){
@@ -38,7 +38,7 @@ public class Pong extends JFrame implements ActionListener {
             public void actionPerformed(ActionEvent e) {
                 Graphics g = getGraphics();
                 g.setColor(getBackground());
-                g.fillRect(playerPaddleX,playerPaddleY,RECT_WIDTH,RECT_HEIGHT);
+                g.fillRect(PLAYER_PADDLE_X,playerPaddleY,RECT_WIDTH,RECT_HEIGHT);
 
                 g.setColor(Color.BLACK);
 
@@ -51,7 +51,7 @@ public class Pong extends JFrame implements ActionListener {
 
 
                 wheelRotation=0;
-                g.fillRect(playerPaddleX,playerPaddleY,RECT_WIDTH,RECT_HEIGHT);
+                g.fillRect(PLAYER_PADDLE_X,playerPaddleY,RECT_WIDTH,RECT_HEIGHT);
             }
         });
         timer.start();
@@ -99,7 +99,7 @@ public class Pong extends JFrame implements ActionListener {
                 g.fillOval(ballX,ballY,CIRCLE_SIZE,CIRCLE_SIZE);
 
                 g.setColor(Color.BLACK);
-                checkGameOver();
+                checkScore();
                 checkBounce();
                 ballX+=xVel;
                 ballY+=yVel;
@@ -112,15 +112,31 @@ public class Pong extends JFrame implements ActionListener {
 
     public void checkBounce(){
 
-        if (ballX+CIRCLE_SIZE==playerPaddleX){
+        //hits top or bottom
+        if (ballX==80||ballX==BOARD_SIZE){
+            yVel=yVel*(-1);
+        }
+        //hits paddle
+        if (ballX+CIRCLE_SIZE==PLAYER_PADDLE_X||ballX==COMP_PADDLE_X){
+
             if (ballY>=playerPaddleY&&ballY<=playerPaddleY+RECT_HEIGHT){
                 xVel=xVel*(-1);
             }
         }
     }
 
+    int cmpScore=0, playerScore=0;
     String score;
     public void checkGameOver(){
+      if (cmpScore>=10||playerScore>=10){
+          String winner = cmpScore<playerScore?"Player Wins!":"Computer Wins!";
+          JOptionPane.showMessageDialog(this, "Game over! "+winner);
+          System.exit(0);
+      }
+    }
+
+    private void checkScore(){
+        checkGameOver();
         if (ballX==0||ballY==BOARD_SIZE-CIRCLE_SIZE) {
             if (ballX==0){
                 playerScore++;
