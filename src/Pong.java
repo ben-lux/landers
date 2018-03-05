@@ -3,38 +3,49 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class Pong extends JFrame implements ActionListener {
-    final int BALL_SIZE=40, BOARD_SIZE=1000, PADDLE_WIDTH=20, PADDLE_HEIGHT=100;
+    private final int BALL_SIZE=40, BOARD_SIZE=1000, PADDLE_WIDTH=20, PADDLE_HEIGHT=100,
+        BALL_CENTER=BALL_SIZE/2;
+    private int difficulty;
     JButton b;
 
     public Pong(){
-      setUpJFrame();
+        setUpJFrame();
+        String[] options={"Easy","Meadium","Hard"};
+        difficulty=JOptionPane.showOptionDialog(this,"Select a difficulty",
+                "Difficulty", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                null,options,options)*2+2;
         playerPaddle();
         compPaddle();
-
     }
 
-    final int PLAYER_PADDLE_X = BOARD_SIZE - 50;
-    int playerPaddleY = BOARD_SIZE/2-PADDLE_HEIGHT/2;
-    int wheelRotation = 0;
+    private void setUpJFrame(){
+        setTitle("Pong");
+        setSize(BOARD_SIZE,BOARD_SIZE);
+        setResizable(false);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        b = new JButton("Start");
+        add(b, BorderLayout.NORTH);
+        b.addActionListener(this);
+        setVisible(true);
+    }
 
-    public void playerPaddle(){
-
+    private final int PLAYER_PADDLE_X = BOARD_SIZE - 50;
+    private int playerPaddleY = BOARD_SIZE/2-PADDLE_HEIGHT/2;
+    private int wheelRotation = 0;
+    private void playerPaddle(){
         this.addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                //if (playerPaddleY != BOARD_SIZE - PADDLE_HEIGHT)
-                    wheelRotation = e.getWheelRotation() * 20;
-
+                wheelRotation = e.getWheelRotation() * 20;
             }
         });
+
         Timer timer = new Timer(5, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Graphics g = getGraphics();
                 g.setColor(getBackground());
                 g.fillRect(PLAYER_PADDLE_X, playerPaddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
-
-                g.setColor(Color.BLACK);
 
                 playerPaddleY += wheelRotation;
                 if (playerPaddleY >= BOARD_SIZE - PADDLE_HEIGHT)
@@ -44,6 +55,7 @@ public class Pong extends JFrame implements ActionListener {
                 }
 
                 wheelRotation = 0;
+                g.setColor(Color.BLACK);
                 g.fillRect(PLAYER_PADDLE_X, playerPaddleY, PADDLE_WIDTH, PADDLE_HEIGHT);
             }
         });
@@ -51,9 +63,9 @@ public class Pong extends JFrame implements ActionListener {
 
     }
 
-    final int COMP_PADDLE_X = 50;
-    int compPaddleY = BOARD_SIZE/2-PADDLE_HEIGHT/2;
-    public void compPaddle(){
+    private final int COMP_PADDLE_X = 50;
+    private int compPaddleY = BOARD_SIZE/2-PADDLE_HEIGHT/2;
+    private void compPaddle(){
 
         Timer timer = new Timer(5, new ActionListener() {
             @Override
@@ -79,22 +91,21 @@ public class Pong extends JFrame implements ActionListener {
         timer.start();
     }
 
-    public void compMovement(){
+    private void compMovement(){
         if(ballX <= BOARD_SIZE/2){
-            compPaddleY += (ballY+BALL_SIZE/2) > (compPaddleY+PADDLE_HEIGHT/2) ? 3:-3;
+            compPaddleY +=
+                    (ballY+BALL_CENTER) > (compPaddleY+PADDLE_HEIGHT/2) ? difficulty:-difficulty;
         }
-
     }
 
-    int ballX = BOARD_SIZE/2, ballY= BOARD_SIZE/2;
-    int yVel=0,xVel=5;
-    Timer timer ;
+    private int ballX = BOARD_SIZE/2, ballY= BOARD_SIZE/2;
+    private int yVel=0,xVel=5;
 
     @Override
     public void actionPerformed(ActionEvent e) {
         remove(b);
         repaint();
-        timer = new Timer(5, new ActionListener() {
+        Timer timer = new Timer(5, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Graphics g = getGraphics();
@@ -102,52 +113,49 @@ public class Pong extends JFrame implements ActionListener {
                 g.fillOval(ballX, ballY, BALL_SIZE, BALL_SIZE);
                 g.setColor(Color.BLACK);
 
-                if(ballX+BALL_SIZE>=PLAYER_PADDLE_X||ballX<=COMP_PADDLE_X
-                        ||ballY <= 0 || ballY >= BOARD_SIZE) {
+                if (ballX + BALL_SIZE >= PLAYER_PADDLE_X || ballX <= COMP_PADDLE_X + PADDLE_WIDTH ||
+                        ballY <= 0 || ballY >= BOARD_SIZE) {
                     checkBounce();
                 }
 
                 ballX += xVel;
                 ballY += yVel;
-                g.fillOval(ballX,ballY,BALL_SIZE,BALL_SIZE);
+                g.fillOval(ballX, ballY, BALL_SIZE, BALL_SIZE);
             }
         });
         timer.start();
     }
 
 
-    public void checkBounce(){
+    private void checkBounce(){
         if (ballX>PLAYER_PADDLE_X||ballX<COMP_PADDLE_X)
             checkScore();
         //hits top or bottom
         if (ballY <= 0 || ballY >= BOARD_SIZE){
             yVel *= (-1);
         }
-        //hits paddle
-        if (ballX + BALL_SIZE >= PLAYER_PADDLE_X && ballX < PLAYER_PADDLE_X+PADDLE_WIDTH&&
-                    ballY >= playerPaddleY && ballY <= playerPaddleY + PADDLE_HEIGHT) {
-                yVel = ((ballY + (BALL_SIZE / 2)) - (playerPaddleY + (PADDLE_HEIGHT / 2))) / 7;
-                xVel*=(-1);
-        } else if ( ballX <= COMP_PADDLE_X && ballX > COMP_PADDLE_X-PADDLE_WIDTH&&
-                (ballY >= compPaddleY && ballY <= compPaddleY + PADDLE_HEIGHT)) {
-                yVel = ((ballY + (BALL_SIZE / 2)) - (compPaddleY + (PADDLE_HEIGHT / 2))) / 7;
-                xVel*=(-1);
-            }
-    }
-
-
-    int cmpScore=0, playerScore=0;
-    String score;
-    public void checkGameOver(){
-        if (cmpScore>=10||playerScore>=10){
-            String winner = cmpScore<playerScore?"Player Wins!":"Computer Wins!";
-            JOptionPane.showMessageDialog(this, "Game over! "+winner+"\nFinal Score: "+score);
-            System.exit(0);
+        //hits player paddle
+        if (ballX + BALL_SIZE >= PLAYER_PADDLE_X && ballX < PLAYER_PADDLE_X + PADDLE_WIDTH &&
+                ballY+BALL_CENTER>= playerPaddleY &&
+                ballY+BALL_CENTER <= playerPaddleY + PADDLE_HEIGHT) {
+            yVel = ((ballY + BALL_CENTER)
+                    - (playerPaddleY + (PADDLE_HEIGHT / 2))) / 7;
+            xVel *= (-1);
+        }
+        //hits comp paddle
+        else if (ballX <= COMP_PADDLE_X + PADDLE_WIDTH && ballX > COMP_PADDLE_X  &&
+                ballY+BALL_CENTER  >= compPaddleY &&
+                ballY+BALL_CENTER <= compPaddleY + PADDLE_HEIGHT) {
+            yVel = ((ballY + BALL_CENTER)
+                    - (compPaddleY + (PADDLE_HEIGHT / 2))) / 7;
+            xVel *= (-1);
         }
     }
 
+    private int cmpScore=0, playerScore=0;
+    private String score;
     private void checkScore(){
-        if (ballX<=0||ballX >= BOARD_SIZE-BALL_SIZE) {//i changed it from ballY to ballX
+        if (ballX<=0||ballX >= BOARD_SIZE-BALL_SIZE) {
             if (ballX<=0){
                 playerScore++;
             }
@@ -166,19 +174,16 @@ public class Pong extends JFrame implements ActionListener {
         }
     }
 
-    private void setUpJFrame(){
-        setTitle("Pong");
-        setSize(BOARD_SIZE,BOARD_SIZE);
-        setResizable(false);
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        b = new JButton("Start");
-        add(b, BorderLayout.NORTH);
-        b.addActionListener(this);
-        setVisible(true);
+    private void checkGameOver(){
+        if (cmpScore>=10||playerScore>=10){
+            String winner = cmpScore<playerScore?"Player Wins!":"Computer Wins!";
+            JOptionPane.showMessageDialog(this,
+                    "Game over! "+winner+"\nFinal Score: "+score);
+            System.exit(0);
         }
+    }
 
     public static void main(String[] args) {
         new Pong();
     }
-
 }
