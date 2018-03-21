@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 
 public class Pong extends JFrame implements ActionListener {
     private final int BALL_SIZE=40, BOARD_SIZE=1000, PADDLE_WIDTH=20, PADDLE_HEIGHT=100,
@@ -94,11 +95,12 @@ public class Pong extends JFrame implements ActionListener {
     private void compMovement(){
         if(ballX <= BOARD_SIZE/2){
             compPaddleY +=
-                    (ballY+BALL_CENTER) > (compPaddleY+PADDLE_HEIGHT/2) ? difficulty:-difficulty;
+                    (ballY+BALL_CENTER) > (compPaddleY+PADDLE_HEIGHT/2)
+                            ? difficulty:-difficulty;
         }
     }
 
-    private int ballX = BOARD_SIZE/2, ballY= BOARD_SIZE/2;
+    private int ballX = BOARD_SIZE/2, ballY= BOARD_SIZE/2-BALL_CENTER;
     private int yVel=0,xVel=5;
 
     @Override
@@ -127,11 +129,12 @@ public class Pong extends JFrame implements ActionListener {
     }
 
 
+    private int bounceScore;
     private void checkBounce(){
         if (ballX>PLAYER_PADDLE_X||ballX<COMP_PADDLE_X)
             checkScore();
         //hits top or bottom
-        if (ballY <= 0 || ballY >= BOARD_SIZE){
+        if (ballY <= 10 || ballY >= BOARD_SIZE-BALL_SIZE-10){
             yVel *= (-1);
         }
         //hits player paddle
@@ -141,6 +144,7 @@ public class Pong extends JFrame implements ActionListener {
             yVel = ((ballY + BALL_CENTER)
                     - (playerPaddleY + (PADDLE_HEIGHT / 2))) / 7;
             xVel *= (-1);
+            bounceScore+=1;
         }
         //hits comp paddle
         else if (ballX <= COMP_PADDLE_X + PADDLE_WIDTH && ballX > COMP_PADDLE_X  &&
@@ -165,11 +169,10 @@ public class Pong extends JFrame implements ActionListener {
             score="Computer: "+cmpScore+"  |  Player: "+playerScore;
             checkGameOver();
             JOptionPane.showMessageDialog(this, score);
-            ballX = BOARD_SIZE/2;
-            ballY= BOARD_SIZE/2;
+            ballX = ballY = BOARD_SIZE/2-BALL_CENTER;
+
             yVel=0;
-            compPaddleY = BOARD_SIZE/2;
-            playerPaddleY = BOARD_SIZE/2;
+            compPaddleY = playerPaddleY = BOARD_SIZE/2-PADDLE_HEIGHT/2;
             repaint();
         }
     }
@@ -179,11 +182,19 @@ public class Pong extends JFrame implements ActionListener {
             String winner = cmpScore<playerScore?"Player Wins!":"Computer Wins!";
             JOptionPane.showMessageDialog(this,
                     "Game over! "+winner+"\nFinal Score: "+score);
+            try {
+                new HighScoresGraphics(this.getContentPane(),bounceScore);
+            }
+            catch (Exception e){
+                JOptionPane.showMessageDialog(this,
+                        "Something Broke");
+                System.exit(0);
+            }
             System.exit(0);
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
         new Pong();
     }
 }
